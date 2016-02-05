@@ -3,7 +3,7 @@
 A command line http inspection server. `http-loupe` allows you to inspect, save or debug http requests you are sending.
 You can now  view the headers, encoding and body of your requests as they would be received at the expected endpoint.
 
-Requests are currently only persistant within sessions. You will therefore lose all your requests once the server is killed
+Requests are currently only persistent within sessions. You will therefore lose all your requests once the server is killed
 or you close the program. This is because `http-loupe` currently stores requests in memory.
 
 ## Ideas
