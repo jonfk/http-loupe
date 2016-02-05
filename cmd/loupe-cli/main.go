@@ -66,7 +66,7 @@ func InputReadline() {
 		}
 		switch line[0] {
 		case "help":
-			fmt.Println("help msg")
+			help()
 		case "save":
 			save(server, line)
 		case "print":
@@ -126,4 +126,16 @@ func save(server *Server, line []string) {
 	if err != nil {
 		fmt.Printf("[ERROR] %v\n", err)
 	}
+}
+
+func help() {
+	fmt.Println("save - save your http request to file (temp.json)")
+	fmt.Println("\tno argument\t- saves last request recieved to file")
+	fmt.Println("\t[i]\t\t- saves i-th request to file")
+	fmt.Println("")
+	fmt.Println("print - print http request to screen")
+	fmt.Println("\tno argument\t- prints last request")
+	fmt.Println("\t[i]\t\t- prints i-th request")
+	fmt.Println("")
+	fmt.Println("list - lists all requests received")
 }
