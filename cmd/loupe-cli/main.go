@@ -5,19 +5,16 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/jonfk/http-loupe/serialization"
-	"github.com/jonfk/http-loupe/store"
 
 	"gopkg.in/readline.v1"
 )
 
 var (
-	server Server = Server{
-		StoreLock: new(sync.RWMutex),
-	}
+	server *Server = NewServer()
 )
 
 func main() {
@@ -34,27 +31,18 @@ func main() {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	//serialization.WriteToFile("temp.json", *r)
 	server.StoreLock.Lock()
 	server.Store.SaveRequest(r)
 	server.StoreLock.Unlock()
-	fmt.Fprintf(w, "ok printed\n")
-}
-
-type Server struct {
-	StoreLock *sync.RWMutex
-	Store     store.Store
+	fmt.Fprintf(w, "ok\n")
 }
 
 func InputReadline() {
 	var completer = readline.NewPrefixCompleter(
-		readline.PcItem("say",
-			readline.PcItem("hello"),
-			readline.PcItem("bye"),
-		),
 		readline.PcItem("help"),
-		readline.PcItem("ping"),
 		readline.PcItem("print"),
+		readline.PcItem("list"),
+		readline.PcItem("save"),
 	)
 
 	rl, err := readline.NewEx(&readline.Config{
@@ -71,23 +59,71 @@ func InputReadline() {
 		if err != nil { // io.EOF
 			break
 		}
+		line_ = strings.TrimRight(line_, " ")
 		line := strings.Split(line_, " ")
 		if len(line) < 1 {
 			continue
 		}
 		switch line[0] {
-		case "ping":
-			fmt.Println("ping")
-		case "say":
-			fmt.Println("say ", line)
+		case "help":
+			fmt.Println("help msg")
 		case "save":
-			if len(line) < 2 {
-				server.StoreLock.RLock()
-				lastReq := server.Store.GetLatest()
-				server.StoreLock.RUnlock()
-
-				serialization.WriteToFile("temp.json", *lastReq)
-			}
+			save(server, line)
+		case "print":
+			print(server, line)
+		case "list":
+			list(server)
 		}
+	}
+}
+
+func list(server *Server) {
+	allReqs := server.GetAllReqs()
+	for i := range allReqs {
+		fmt.Printf("%d : %v\n", i, allReqs[i])
+	}
+}
+
+func print(server *Server, line []string) {
+	var req *http.Request
+	if len(line) < 2 {
+		req = server.GetLatestReq()
+	} else {
+		i, err := strconv.Atoi(line[1])
+		if err != nil {
+			req = server.GetLatestReq()
+		} else {
+			req = server.GetReq(i)
+		}
+	}
+	if req == nil {
+		return
+	}
+	json, err := serialization.SerializeToJson(req)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	fmt.Println(string(json))
+}
+
+func save(server *Server, line []string) {
+	var req *http.Request
+	if len(line) < 2 {
+		req = server.GetLatestReq()
+	} else {
+		i, err := strconv.Atoi(line[1])
+		if err != nil {
+			req = server.GetLatestReq()
+		} else {
+			req = server.GetReq(i)
+		}
+	}
+	if req == nil {
+		return
+	}
+	err := serialization.WriteToFile("temp.json", req)
+	if err != nil {
+		fmt.Printf("[ERROR] %v\n", err)
 	}
 }

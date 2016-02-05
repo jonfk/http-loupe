@@ -33,3 +33,10 @@ func (store *Store) GetLatest() *http.Request {
 
 	return &(store.Requests[len(store.Requests)-1].Request)
 }
+
+func (store *Store) Get(i int) *http.Request {
+	if len(store.Requests) < 1 || i > len(store.Requests)-1 {
+		return nil
+	}
+	return &(store.Requests[i].Request)
+}
